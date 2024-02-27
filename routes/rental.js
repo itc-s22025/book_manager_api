@@ -7,7 +7,7 @@ const prisma = new PrismaClient()
 //ログインチェック
 router.use((req, res, next) => {
     if (!req.user) {
-        res.status(401).json({message: "NG from rental"});
+        res.status(401).json({message: "NG"});
         return
     }
     next();
