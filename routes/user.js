@@ -10,7 +10,7 @@ const prisma = new PrismaClient()
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   // res.json({message: '/usersのルートのとこだよ〜'});
-  res.redirect('/users/check')
+  res.redirect('/user/check')
 });
 
 //ログイン認証
@@ -82,7 +82,7 @@ router.post("/logout", (req, res, next) => {
     if (err) {
       return next(err);
     }
-    res.redirect("/users");
+    res.redirect("/user");
   });
 });
 
