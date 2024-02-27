@@ -15,42 +15,6 @@ router.use((req, res, next) => {
     next();
 })
 
-//
-// router.get('/test/:id', async (req, res, next) => {
-//     try {
-//         const id = +req.params.id;
-//         const book = await prisma.books.findUnique(
-//             {
-//                 where:{
-//                     id
-//                 }
-//             }
-//         )
-//         //存在する書籍か
-//         if (!book){
-//             return res.status(404).json({message: "存在しない書籍っぽい"})
-//         }
-//
-//         //貸出状況
-//         const isRental = await prisma.rental.findFirst({
-//             where:{
-//                 bookId: id,
-//                 //返却日がnullのレコード->貸出されてない
-//                 returnDate: null
-//             }
-//         })
-//
-//         if (isRental){
-//             return res.status(400).json({message: "貸出中っぽい"})
-//         }
-//
-//         res.json({isRental})
-//     }catch (e) {
-//         console.log("エラー",e)
-//     }
-// })
-
-
 router.post('/start', async (req, res, next) => {
     try {
         const id = +req.body.id;
@@ -88,11 +52,42 @@ router.post('/start', async (req, res, next) => {
             }
         })
 
-        res.status(200).json({message: "貸出成功"})
+        res.status(201).json({message: "貸出成功", res: rental})
     } catch (e) {
         res.status(400).json({message: "その他のエラー"})
     }
 })
 
+router.post('/return', async (req, res, next) => {
+    try {
+        const rentalId = +req.body.rentalId
+        const isRental = await prisma.rental.findUnique({
+            where: {
+                id: rentalId
+            },
+            include: {
+                book: true
+            }
+        });
+
+        if (!isRental) {
+            return res.status(404).json({message: "存在しない貸出データっぽい"})
+        }
+
+        //レンタル情報更新
+        const updateRental = await prisma.rental.update({
+            where: {
+                id: rentalId
+            },
+            data: {
+                returnDate: new Date() //今
+            }
+        });
+        res.status(200).json({result: "OK"});
+
+    } catch (e) {
+        res.status(400).json({message: "NG"})
+    }
+})
 
 export default router;
