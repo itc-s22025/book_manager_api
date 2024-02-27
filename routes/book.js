@@ -1,5 +1,4 @@
 import express from 'express';
-import {check, validationResult} from "express-validator";
 import {PrismaClient} from "@prisma/client";
 import user from "./user.js";
 
@@ -23,9 +22,9 @@ router.get('/list',async (req, res, next) => {
              publishDate: 'desc'
             }
         })
-        res.json({books})
+        res.status(200).json({books})
     }catch (e) {
-        next(e)
+        res.status(400).json({message: e})
     }
 })
 
@@ -46,9 +45,9 @@ router.get('/detail/:id', async (req, res, next) => {
                 }
             }
         })
-        res.json({book})
+        res.status(200).json({book})
     }catch (e) {
-        next(e)
+        res.status(400).json({message: e})
     }
 })
 

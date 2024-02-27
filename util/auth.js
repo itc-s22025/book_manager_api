@@ -63,7 +63,6 @@ const config = (passport) => {
     // セッションストレージにユーザデータを保存するときに呼ばれる
     passport.serializeUser((user, done) => {
         process.nextTick(() => {
-            console.log("Serialize User:", user);
             done(null, {id: user.id, email: user.email});
         });
     });
