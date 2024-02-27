@@ -9,7 +9,8 @@ const prisma = new PrismaClient()
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-  res.json({message: '/usersのルートのとこだよ〜'});
+  // res.json({message: '/usersのルートのとこだよ〜'});
+  res.redirect('/users/check')
 });
 
 //ログイン認証
@@ -23,7 +24,7 @@ router.post("/login", passport.authenticate("local", {
 }))
 
 //sign up
-router.post('/signup', [
+router.post('/register', [
   check('email', '名前の入力は必須です').notEmpty(),
   check('password', 'パスワードの入力は必須です').notEmpty()
 ], async (req, res, next) => {
@@ -48,7 +49,7 @@ router.post('/signup', [
         isAdmin
       }
     });
-    return res.status(201).json({ message: 'ユーザ登録できたよ〜', res: email });
+    return res.status(201).json({ message: 'created', res: email });
   } catch (e) {
     switch (e.code){
       case "P2002":
@@ -60,6 +61,29 @@ router.post('/signup', [
     }
     return console.error(e)
   }
+});
+
+// ログインしてるか
+router.use((req, res, next) => {
+  if (!req.user) {
+    res.status(400).json({message: "NG"});
+    return
+  }
+  next();
+})
+
+router.get("/check", (req, res, next) => {
+  res.status(200).json({message: "OK", result: req.user});
+});
+
+//ログアウト
+router.post("/logout", (req, res, next) => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("/users");
+  });
 });
 
 export default router;

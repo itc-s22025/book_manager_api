@@ -32,6 +32,11 @@ app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(import.meta.dirname, 'public')));
 
+//TypeError: Do not know how to serialize a BigInt用
+BigInt.prototype.toJSON = function () {
+    return this.toString()
+}
+
 //session
 app.use(session({
     secret: "4+KcU1MoHCJaiXvHpHhJUrXk1TZZ7Nyy/9lvGt0SybBABLgP",
