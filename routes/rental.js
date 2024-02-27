@@ -19,11 +19,11 @@ router.use((req, res, next) => {
 //貸出
 router.post('/start', async (req, res, next) => {
     try {
-        const id = +req.body.id;
+        const bookId = +req.body.id;
         const book = await prisma.books.findUnique(
             {
                 where: {
-                    id
+                    id: bookId
                 }
             }
         )
@@ -35,7 +35,7 @@ router.post('/start', async (req, res, next) => {
         //貸出状況
         const isRental = await prisma.rental.findFirst({
             where: {
-                bookId: id,
+                bookId: bookId,
                 //返却日がnullのレコード->貸出されてない
                 returnDate: null
             }
@@ -47,8 +47,8 @@ router.post('/start', async (req, res, next) => {
         //貸出
         const rental = await prisma.rental.create({
             data: {
-                user: {connect: {id: +req.body.userId}},
-                book: {connect: {id: id}},
+                user: {connect: {id: +req.user.id}},
+                book: {connect: {id: bookId}},
                 rentalDate: new Date(),
                 returnDeadLine: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) //７日後
             }
@@ -122,6 +122,7 @@ router.get('/current', async (req, res, next)=> {
             rentalDate: rental.rentalDate,
             returnDeadLine: rental.returnDeadLine
         }));
+
         res.status(200).json({rentalBooks})
 
     }catch (e) {

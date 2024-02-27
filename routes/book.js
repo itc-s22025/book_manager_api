@@ -14,16 +14,16 @@ router.use((req, res, next) => {
     next();
 })
 
-router.get('/list',async (req, res, next) => {
+router.get('/list', async (req, res, next) => {
     const page = +req.query.page;
     try {
         const books = await prisma.books.findMany({
             orderBy: {
-             publishDate: 'desc'
+                publishDate: 'desc'
             }
         })
         res.status(200).json({books})
-    }catch (e) {
+    } catch (e) {
         res.status(400).json({message: e})
     }
 })
@@ -32,21 +32,36 @@ router.get('/detail/:id', async (req, res, next) => {
     const id = +req.params.id;
     try {
         const book = await prisma.books.findUnique({
-            where:{
+            where: {
                 id: id
             },
-            include:{
-                rental:{
-                    select:{
-                        userName: user.name,
+            include: {
+                rental: {
+                    select: {
+                        user: {
+                            select: {
+                                name: true
+                            }
+                        },
                         rentalDate: true,
                         returnDeadLine: true,
                     }
                 }
             }
         })
-        res.status(200).json({book})
-    }catch (e) {
+
+        const rentalInfo = book.rental.map(rental => ({
+            userName: rental.user.name,
+            rentalDate: rental.rentalDate,
+            returnDeadLine: rental.returnDeadLine
+        }))
+
+        delete book.rental;
+        book.rentalInfo = rentalInfo
+
+        res.status(200).json(book);
+
+    } catch (e) {
         res.status(400).json({message: e})
     }
 })
