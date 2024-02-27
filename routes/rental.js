@@ -1,7 +1,5 @@
 import express from 'express';
-import {check, validationResult} from "express-validator";
 import {PrismaClient} from "@prisma/client";
-import book from "./book.js";
 
 const router = express.Router();
 const prisma = new PrismaClient()
@@ -97,11 +95,11 @@ router.post('/return', async (req, res, next) => {
 
 
 //借用書籍一覧
-router.get('/current', async (req, res, next)=> {
+router.get('/current', async (req, res, next) => {
     try {
         const userId = +req.user.id
         const currentRentals = await prisma.rental.findMany({
-            where:{
+            where: {
                 userId: userId,
                 returnDate: null //まだ返却してないやつ
             },
@@ -112,6 +110,9 @@ router.get('/current', async (req, res, next)=> {
                         title: true
                     }
                 }
+            },
+            orderBy: {
+                rentalDate: 'desc'
             }
         })
 
@@ -125,7 +126,41 @@ router.get('/current', async (req, res, next)=> {
 
         res.status(200).json({rentalBooks})
 
-    }catch (e) {
+    } catch (e) {
+        console.log(e)
+    }
+})
+
+
+//借用書籍履歴
+router.get('/history', async (req, res, next) => {
+    try {
+        const hist = await prisma.rental.findMany({
+            where: {
+                userId: +req.user.id
+            },
+            include: {
+                book: {
+                    select: {
+                        title: true
+                    }
+                }
+            },
+            orderBy: {
+                rentalDate: 'desc'
+            }
+        })
+
+        const rentalHistory = hist.map(rental => ({
+            rentalId: rental.id,
+            bookId: rental.bookId,
+            bookName: rental.book.title,
+            rentalDate: rental.rentalDate,
+            returnDeadLine: rental.returnDeadLine
+        }))
+        res.status(200).json({rentalHistory})
+
+    } catch (e) {
         console.log(e)
     }
 })
