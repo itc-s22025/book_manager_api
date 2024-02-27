@@ -1,7 +1,5 @@
 import express from 'express';
-import {check, validationResult} from "express-validator";
 import {PrismaClient} from "@prisma/client";
-import user from "./user.js";
 
 const router = express.Router();
 const prisma = new PrismaClient()
@@ -15,13 +13,15 @@ router.use((req, res, next) => {
     next();
 })
 
+
+//貸出
 router.post('/start', async (req, res, next) => {
     try {
-        const id = +req.body.id;
+        const bookId = +req.body.id;
         const book = await prisma.books.findUnique(
             {
                 where: {
-                    id
+                    id: bookId
                 }
             }
         )
@@ -33,31 +33,33 @@ router.post('/start', async (req, res, next) => {
         //貸出状況
         const isRental = await prisma.rental.findFirst({
             where: {
-                bookId: id,
+                bookId: bookId,
                 //返却日がnullのレコード->貸出されてない
                 returnDate: null
             }
         })
-
         if (isRental) {
             return res.status(409).json({message: "貸出中のため失敗"})
         }
 
+        //貸出
         const rental = await prisma.rental.create({
             data: {
-                user: {connect: {id: +req.body.userId}},
-                book: {connect: {id: id}},
+                user: {connect: {id: +req.user.id}},
+                book: {connect: {id: bookId}},
                 rentalDate: new Date(),
                 returnDeadLine: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) //７日後
             }
         })
-
         res.status(201).json({message: "貸出成功", res: rental})
+
     } catch (e) {
         res.status(400).json({message: "その他のエラー"})
     }
 })
 
+
+//返却
 router.post('/return', async (req, res, next) => {
     try {
         const rentalId = +req.body.rentalId
@@ -70,6 +72,7 @@ router.post('/return', async (req, res, next) => {
             }
         });
 
+        //存在する貸出データか
         if (!isRental) {
             return res.status(404).json({message: "存在しない貸出データっぽい"})
         }
@@ -87,6 +90,78 @@ router.post('/return', async (req, res, next) => {
 
     } catch (e) {
         res.status(400).json({message: "NG"})
+    }
+})
+
+
+//借用書籍一覧
+router.get('/current', async (req, res, next) => {
+    try {
+        const userId = +req.user.id
+        const currentRentals = await prisma.rental.findMany({
+            where: {
+                userId: userId,
+                returnDate: null //まだ返却してないやつ
+            },
+            include: {
+                book: {
+                    select: {
+                        id: true,
+                        title: true
+                    }
+                }
+            },
+            orderBy: {
+                rentalDate: 'desc'
+            }
+        })
+
+        const rentalBooks = currentRentals.map(rental => ({
+            rentalId: rental.id,
+            bookId: rental.bookId,
+            bookName: rental.book.title,
+            rentalDate: rental.rentalDate,
+            returnDeadLine: rental.returnDeadLine
+        }));
+
+        res.status(200).json({rentalBooks})
+
+    } catch (e) {
+        console.log(e)
+    }
+})
+
+
+//借用書籍履歴
+router.get('/history', async (req, res, next) => {
+    try {
+        const hist = await prisma.rental.findMany({
+            where: {
+                userId: +req.user.id
+            },
+            include: {
+                book: {
+                    select: {
+                        title: true
+                    }
+                }
+            },
+            orderBy: {
+                rentalDate: 'desc'
+            }
+        })
+
+        const rentalHistory = hist.map(rental => ({
+            rentalId: rental.id,
+            bookId: rental.bookId,
+            bookName: rental.book.title,
+            rentalDate: rental.rentalDate,
+            returnDeadLine: rental.returnDeadLine
+        }))
+        res.status(200).json({rentalHistory})
+
+    } catch (e) {
+        console.log(e)
     }
 })
 
