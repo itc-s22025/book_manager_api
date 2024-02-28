@@ -1,10 +1,10 @@
 import express from 'express';
 import {PrismaClient} from "@prisma/client";
-import user from "./user.js";
-import book from "../admin/book.js";
 
 const router = express.Router();
 const prisma = new PrismaClient()
+
+const maxPage = 10;
 
 //ログインチェック
 router.use((req, res, next) => {
@@ -18,15 +18,16 @@ router.use((req, res, next) => {
 
 //書籍一覧
 router.get('/list', async (req, res, next) => {
-    //ここあとで直す
-    const page = +req.query.page;
-    const maxPage = 10;
+    const page = req.query.page ? +req.query.page : 1;
+    const skip = maxPage * (page - 1);
 
     try {
         const books = await prisma.books.findMany({
             orderBy: {
                 publishDate: 'desc'
-            }
+            },
+            skip,
+            take: maxPage
         })
 
         const formattedBooks = books.map(book => {
