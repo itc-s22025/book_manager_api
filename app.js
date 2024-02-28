@@ -11,6 +11,8 @@ import indexRouter from './routes/index.js';
 import usersRouter from './routes/user.js';
 import booksRouter from './routes/book.js';
 import rentalRouter from './routes/rental.js';
+import adminBooksRouter from './admin/book.js'
+
 import passportConfig from './util/auth.js';
 
 const app = express();
@@ -56,6 +58,7 @@ app.use('/', indexRouter);
 app.use('/user', usersRouter);
 app.use('/book', booksRouter);
 app.use('/rental', rentalRouter);
+app.use('/admin/book', adminBooksRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
