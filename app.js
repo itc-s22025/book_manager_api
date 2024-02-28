@@ -11,7 +11,8 @@ import indexRouter from './routes/index.js';
 import usersRouter from './routes/user.js';
 import booksRouter from './routes/book.js';
 import rentalRouter from './routes/rental.js';
-import adminBooksRouter from './admin/book.js'
+import adminBooksRouter from './admin/book.js';
+import adminRentalRouter from './admin/rental.js';
 
 import passportConfig from './util/auth.js';
 
@@ -59,6 +60,7 @@ app.use('/user', usersRouter);
 app.use('/book', booksRouter);
 app.use('/rental', rentalRouter);
 app.use('/admin/book', adminBooksRouter);
+app.use('/admin/rental', adminRentalRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
