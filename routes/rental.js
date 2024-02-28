@@ -7,7 +7,7 @@ const prisma = new PrismaClient()
 //ログインチェック
 router.use((req, res, next) => {
     if (!req.user) {
-        res.status(401).json({message: "NG"});
+        res.status(401).json({result: "NG"});
         return
     }
     next();
@@ -27,7 +27,7 @@ router.post('/start', async (req, res, next) => {
         )
         //存在する書籍か
         if (!book) {
-            return res.status(404).json({message: "存在しない書籍っぽい"})
+            return res.status(404).json({error: "存在しない書籍っぽい"})
         }
 
         //貸出状況
@@ -39,7 +39,7 @@ router.post('/start', async (req, res, next) => {
             }
         })
         if (isRental) {
-            return res.status(409).json({message: "貸出中のため失敗"})
+            return res.status(409).json({error: "貸出中のため失敗"})
         }
 
         //貸出
@@ -51,10 +51,19 @@ router.post('/start', async (req, res, next) => {
                 returnDeadLine: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) //７日後
             }
         })
-        res.status(201).json({message: "貸出成功", res: rental})
+
+        const formattedRental = {
+            id: rental.id,
+            bookId: rental.bookId,
+            rentalDate: rental.rentalDate,
+            returnDeadLine: rental.returnDeadLine
+        };
+
+        res.status(201).json({result: "貸出成功", data: formattedRental})
 
     } catch (e) {
-        res.status(400).json({message: "その他のエラー"})
+        res.status(400).json({error: "その他のエラー"})
+        console.log(e)
     }
 })
 
@@ -156,7 +165,7 @@ router.get('/history', async (req, res, next) => {
             bookId: rental.bookId,
             bookName: rental.book.title,
             rentalDate: rental.rentalDate,
-            returnDeadLine: rental.returnDeadLine
+            returnDate: rental.returnDate
         }))
         res.status(200).json({rentalHistory})
 
