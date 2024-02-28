@@ -23,22 +23,22 @@ router.get('/', async (req, res, next) => {
 router.get('/current', async (req, res, next) => {
     try {
         const rentalData = await prisma.rental.findMany({
-            where:{
+            where: {
                 returnDate: null
             },
-            include:{
-                user:{
-                    select:{
+            include: {
+                user: {
+                    select: {
                         name: true
                     }
                 },
-                book:{
-                    select:{
+                book: {
+                    select: {
                         title: true
                     }
                 }
             },
-            orderBy:{
+            orderBy: {
                 rentalDate: 'desc'
             }
         })
@@ -54,9 +54,54 @@ router.get('/current', async (req, res, next) => {
         }))
         res.status(200).json({rentalBooks})
 
-    }catch (e) {
+    } catch (e) {
         console.log(e)
     }
 })
 
+
+//特定ユーザの貸出中書籍一覧
+router.get('/current/:uid', async (req, res, next) => {
+    try {
+        const uid = +req.params.uid;
+        const individualRentalData = await prisma.rental.findMany({
+            where: {
+                userId: uid,
+                returnDate: null
+            },
+            include: {
+                user: {
+                    select: {
+                        name: true
+                    }
+                },
+                book: {
+                    select: {
+                        title: true
+                    }
+                }
+            },
+            orderBy: {
+                rentalDate: 'desc'
+            }
+        })
+
+        const formattedData = individualRentalData.map(rental => ({
+            userId: uid,
+            userName: rental.user.name,
+            rentalBooks:{
+                rentalId: rental.id,
+                bookId: rental.bookId,
+                bookName: rental.book.title,
+                rentalDate: rental.rentalDate,
+                returnDeadLine: rental.returnDeadLine
+            }
+        }))
+
+        res.status(200).json(formattedData)
+
+    } catch (e) {
+        console.log(e)
+    }
+})
 export default router;
