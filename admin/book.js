@@ -9,13 +9,13 @@ router.use((req, res, next) => {
     if (req.user && req.user.isAdmin === true) {
         next();
     } else {
-        res.status(403).json({ message: "NG" }); // 管理者でない場合はアクセス拒否
+        res.status(403).json({message: "NG"}); // 管理者でない場合はアクセス拒否
     }
-})
+});
 
-router.get("/", async (req, res, next)=> {
+router.get("/", async (req, res, next) => {
     res.json({msg: "admin/book"})
-})
+});
 
 
 //書籍情報登録
@@ -23,7 +23,7 @@ router.post('/create', async (req, res, next) => {
     try {
         const {isbn13, title, author, publishDate} = req.body;
         const register = await prisma.books.create({
-            data:{
+            data: {
                 isbn13,
                 title,
                 author,
@@ -32,10 +32,34 @@ router.post('/create', async (req, res, next) => {
         })
         res.status(200).json({message: "OK"})
 
-    }catch (e) {
+    } catch (e) {
         console.log(e)
         res.status(400).json({message: "NG"})
     }
-})
+});
+
+
+//書籍情報更新
+router.put('/update', async (req, res, next) => {
+    try {
+        const {bookId, isbn13, title, author, publishDate} = req.body;
+        const updateBookInfo = await prisma.books.update({
+            where: {
+                id: +bookId
+            },
+            data: {
+                isbn13,
+                title,
+                author,
+                publishDate
+            }
+        });
+        res.status(200).json({result: "OK"})
+
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({message: "NG"})
+    }
+});
 
 export default router;
