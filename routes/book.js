@@ -1,10 +1,10 @@
 import express from 'express';
 import {PrismaClient} from "@prisma/client";
-import user from "./user.js";
-import book from "../admin/book.js";
 
 const router = express.Router();
 const prisma = new PrismaClient()
+
+const maxPerPage = 2;
 
 //ログインチェック
 router.use((req, res, next) => {
@@ -18,27 +18,39 @@ router.use((req, res, next) => {
 
 //書籍一覧
 router.get('/list', async (req, res, next) => {
-    //ここあとで直す
-    const page = +req.query.page;
-    const maxPage = 10;
+    const page = req.query.page ? +req.query.page : 1;
+    const skip = maxPerPage * (page - 1);
 
     try {
-        const books = await prisma.books.findMany({
-            orderBy: {
-                publishDate: 'desc'
-            }
-        })
+        const [books, count] = await Promise.all([
+            prisma.books.findMany({
+                orderBy: {
+                    publishDate: 'desc'
+                },
+                skip,
+                take: maxPerPage
+            }),
+            //全体の書籍数
+            prisma.books.count()
+        ]);
+        //最大ページ数計算
+        const maxPage = Math.ceil(count / maxPerPage);
+
+        //指定されたpageの値が最大ページ数より大きいとき
+        if (page > maxPage) {
+            return res.status(404).json({message: "ページが見つかりません"});
+        }
 
         const formattedBooks = books.map(book => {
             delete book.isbn13;
             return book;
         });
+        res.status(200).json({books: formattedBooks, maxPage})
 
-        res.status(200).json({books: formattedBooks})
     } catch (e) {
         res.status(400).json({message: e})
     }
-})
+});
 
 
 //書籍詳細
